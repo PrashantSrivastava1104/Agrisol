@@ -1,89 +1,137 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<!-- Crop Recommendation Section -->
-<section class="section">
-  <h2 class="section-title">🌾 Crop Recommendation</h2>
-  <div class="card">
-    <form method="post" action="/predict/crop">
-      <div class="form-grid">
-        <div class="form-group">
-          <label for="crop-n">Nitrogen (N) <span class="unit">kg/ha</span></label>
-          <input id="crop-n" name="N" type="number" step="1" placeholder="e.g., 90" required>
-        </div>
-        <div class="form-group">
-          <label for="crop-p">Phosphorus (P) <span class="unit">kg/ha</span></label>
-          <input id="crop-p" name="P" type="number" step="1" placeholder="e.g., 42" required>
-        </div>
-        <div class="form-group">
-          <label for="crop-k">Potassium (K) <span class="unit">kg/ha</span></label>
-          <input id="crop-k" name="K" type="number" step="1" placeholder="e.g., 43" required>
-        </div>
-        <div class="form-group">
-          <label for="crop-temp">Temperature <span class="unit">°C</span></label>
-          <input id="crop-temp" name="temperature" type="number" step="0.1" placeholder="e.g., 20.8" required>
-        </div>
-        <div class="form-group">
-          <label for="crop-humidity">Humidity <span class="unit">%</span></label>
-          <input id="crop-humidity" name="humidity" type="number" step="0.1" placeholder="e.g., 82.0" required>
-        </div>
-        <div class="form-group">
-          <label for="crop-ph">pH Level</label>
-          <input id="crop-ph" name="ph" type="number" step="0.1" placeholder="e.g., 6.5" required>
-        </div>
-        <div class="form-group">
-          <label for="crop-rainfall">Rainfall <span class="unit">mm</span></label>
-          <input id="crop-rainfall" name="rainfall" type="number" step="0.1" placeholder="e.g., 202.9" required>
-        </div>
-      </div>
-      <button type="submit">🔍 Predict Crop</button>
-    </form>
+<!-- Hero Section -->
+<section class="hero">
+  <div class="hero-content">
+    <h1 class="hero-title">Welcome to AgriSol</h1>
+    <p class="hero-subtitle">Smart Agriculture Solutions Powered by AI</p>
+    <p class="hero-description">
+      Make data-driven decisions for your farm with our advanced crop prediction and soil monitoring tools.
+      Increase yields, optimize resources, and grow smarter.
+    </p>
+    <div class="hero-buttons">
+      {% if current_user.is_authenticated %}
+      <a href="{{ url_for('crop_prediction_page') }}" class="btn btn-hero-primary">Get Started</a>
+      <a href="{{ url_for('history') }}" class="btn btn-hero-secondary">View History</a>
+      {% else %}
+      <a href="{{ url_for('auth.signup') }}" class="btn btn-hero-primary">Get Started</a>
+      <a href="{{ url_for('auth.login') }}" class="btn btn-hero-secondary">Sign In</a>
+      {% endif %}
+    </div>
   </div>
 </section>
 
-<!-- Soil Monitoring Section -->
-<section class="section">
-  <h2 class="section-title">🌍 Soil Monitoring</h2>
-  <div class="card">
-    <form method="post" action="/predict/soil">
-      <div class="form-grid">
-        <div class="form-group">
-          <label for="soil-temp">Temperature <span class="unit">°C</span></label>
-          <input id="soil-temp" name="temperature" type="number" step="0.1" placeholder="e.g., 25.0" required>
-        </div>
-        <div class="form-group">
-          <label for="soil-humidity">Humidity <span class="unit">%</span></label>
-          <input id="soil-humidity" name="humidity" type="number" step="0.1" placeholder="e.g., 65.0" required>
-        </div>
-        <div class="form-group">
-          <label for="soil-ph">pH Level</label>
-          <input id="soil-ph" name="ph" type="number" step="0.1" placeholder="e.g., 6.8" required>
-        </div>
-        <div class="form-group">
-          <label for="soil-ec">Electrical Conductivity (EC) <span class="unit">dS/m</span></label>
-          <input id="soil-ec" name="ec" type="number" step="0.1" placeholder="e.g., 1.2" required>
-        </div>
-        <div class="form-group">
-          <label for="soil-n">Nitrogen (N) <span class="unit">kg/ha</span></label>
-          <input id="soil-n" name="N" type="number" step="1" placeholder="e.g., 80" required>
-        </div>
-        <div class="form-group">
-          <label for="soil-p">Phosphorus (P) <span class="unit">kg/ha</span></label>
-          <input id="soil-p" name="P" type="number" step="1" placeholder="e.g., 40" required>
-        </div>
-        <div class="form-group">
-          <label for="soil-k">Potassium (K) <span class="unit">kg/ha</span></label>
-          <input id="soil-k" name="K" type="number" step="1" placeholder="e.g., 45" required>
-        </div>
-      </div>
-      <button type="submit">📊 Analyze Soil</button>
-    </form>
+<!-- Features Section -->
+<section class="features-section">
+  <h2 class="features-title">Our Solutions</h2>
+  <p class="features-subtitle">Comprehensive tools to optimize your agricultural operations</p>
+
+  <div class="features-grid">
+    <!-- Crop Recommendation Feature -->
+    <div class="feature-card">
+      <div class="feature-icon">🌾</div>
+      <h3>Crop Recommendation</h3>
+      <p>Get AI-powered crop suggestions based on your soil nutrients, climate conditions, and rainfall patterns.</p>
+      <ul class="feature-list">
+        <li>✓ Analyze N, P, K levels</li>
+        <li>✓ Consider temperature & humidity</li>
+        <li>✓ Factor in rainfall data</li>
+        <li>✓ Get confidence scores</li>
+      </ul>
+      {% if current_user.is_authenticated %}
+      <a href="{{ url_for('crop_prediction_page') }}" class="btn btn-feature">Try Now →</a>
+      {% else %}
+      <a href="{{ url_for('auth.login') }}" class="btn btn-feature">Login to Use →</a>
+      {% endif %}
+    </div>
+
+    <!-- Soil Monitoring Feature -->
+    <div class="feature-card">
+      <div class="feature-icon">🌱</div>
+      <h3>Soil Monitoring</h3>
+      <p>Real-time soil analysis to determine irrigation needs and get crop recommendations for your soil conditions.
+      </p>
+      <ul class="feature-list">
+        <li>✓ Monitor soil moisture</li>
+        <li>✓ Check pH & EC levels</li>
+        <li>✓ Irrigation recommendations</li>
+        <li>✓ Suitable crop suggestions</li>
+      </ul>
+      {% if current_user.is_authenticated %}
+      <a href="{{ url_for('soil_monitoring_page') }}" class="btn btn-feature">Try Now →</a>
+      {% else %}
+      <a href="{{ url_for('auth.login') }}" class="btn btn-feature">Login to Use →</a>
+      {% endif %}
+    </div>
+
+    <!-- Prediction History Feature -->
+    <div class="feature-card">
+      <div class="feature-icon">📊</div>
+      <h3>Prediction History</h3>
+      <p>Track all your predictions over time. Review past analyses and monitor trends in your agricultural data.</p>
+      <ul class="feature-list">
+        <li>✓ Save all predictions</li>
+        <li>✓ View detailed history</li>
+        <li>✓ Track over time</li>
+        <li>✓ Export your data</li>
+      </ul>
+      {% if current_user.is_authenticated %}
+      <a href="{{ url_for('history') }}" class="btn btn-feature">View History →</a>
+      {% else %}
+      <a href="{{ url_for('auth.login') }}" class="btn btn-feature">Login to Use →</a>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+<!-- Benefits Section -->
+<section class="benefits-section">
+  <h2 class="benefits-title">Why Choose AgriSol?</h2>
+  <div class="benefits-grid">
+    <div class="benefit-item">
+      <div class="benefit-icon">🤖</div>
+      <h4>AI-Powered</h4>
+      <p>Advanced machine learning models trained on extensive agricultural data</p>
+    </div>
+    <div class="benefit-item">
+      <div class="benefit-icon">⚡</div>
+      <h4>Instant Results</h4>
+      <p>Get predictions and recommendations in seconds, not hours</p>
+    </div>
+    <div class="benefit-item">
+      <div class="benefit-icon">🔒</div>
+      <h4>Secure & Private</h4>
+      <p>Your data is encrypted and stored securely. Only you can access it</p>
+    </div>
+    <div class="benefit-item">
+      <div class="benefit-icon">📱</div>
+      <h4>Always Accessible</h4>
+      <p>Access your predictions anytime, anywhere, on any device</p>
+    </div>
+    <div class="benefit-item">
+      <div class="benefit-icon">📊</div>
+      <h4>Data-Driven Insights</h4>
+      <p>Make informed decisions backed by scientific analysis and proven patterns</p>
+    </div>
+    <div class="benefit-item">
+      <div class="benefit-icon">💰</div>
+      <h4>Free to Use</h4>
+      <p>Access all features at no cost. No hidden fees or premium tiers</p>
+    </div>
+  </div>
+</section>
+
+<!-- CTA Section -->
+<section class="cta-section">
+  <div class="cta-content">
+    <h2>Ready to Optimize Your Farm?</h2>
+    <p>Join AgriSol today and start making smarter agricultural decisions</p>
+    {% if not current_user.is_authenticated %}
+    <a href="{{ url_for('auth.signup') }}" class="btn btn-cta">Create Free Account</a>
+    {% else %}
+    <a href="{{ url_for('crop_prediction_page') }}" class="btn btn-cta">Start Predicting</a>
+    {% endif %}
   </div>
 </section>
 {% endblock %}
-
-
-
-
-
-
