@@ -50,9 +50,10 @@ Thumbs.db
 .env.local
 
 # Model files (optional - uncomment if models are too large)
-# *.keras
-# *.pkl
-# *.h5
+*.keras
+*.pkl
+*.h5
+*.json
 
 # Data files (optional - uncomment if datasets are too large)
-# *.csv
+*.csv

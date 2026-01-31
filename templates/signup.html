@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}Sign Up - AgriSol{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <h2>Create Account</h2>
+        <p class="auth-subtitle">Join AgriSol for smart agriculture solutions</p>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }}">
+            {{ message }}
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="{{ url_for('auth.signup') }}" class="auth-form">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" required autofocus minlength="3">
+                <small>At least 3 characters</small>
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required minlength="6">
+                <small>At least 6 characters</small>
+            </div>
+
+            <div class="form-group">
+                <label for="confirm_password">Confirm Password</label>
+                <input type="password" id="confirm_password" name="confirm_password" required minlength="6">
+            </div>
+
+            <button type="submit" class="btn btn-primary">Sign Up</button>
+        </form>
+
+        <div class="auth-footer">
+            <p>Already have an account? <a href="{{ url_for('auth.login') }}">Login here</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}

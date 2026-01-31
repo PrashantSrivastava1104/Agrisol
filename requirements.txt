@@ -6,9 +6,15 @@ numpy==1.26.4
 pandas==2.2.2
 scikit-learn==1.4.2
 tensorflow==2.15.1
+tf-keras==2.15.1
 joblib==1.4.2
 python-dotenv==1.0.1
 kaggle==1.6.17
+Flask-SQLAlchemy==3.1.1
+Flask-Login==0.6.3
+Flask-Bcrypt==1.0.1
+xgboost>=2.0.0
+matplotlib>=3.8.0
 
 
 

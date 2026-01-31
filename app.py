@@ -5,16 +5,44 @@ from flask import Flask, render_template, request, jsonify
 import numpy as np
 from joblib import load
 import tf_keras as keras
+from flask_login import LoginManager, login_required, current_user
 from config import (
     SECRET_KEY,
     CROP_SCALER_PATH, SOIL_SCALER_PATH,
     CROP_MODEL_PATH, SOIL_CLF_MODEL_PATH, SOIL_REG_MODEL_PATH,
     LABEL_MAPS_CLASSINDEX,
+    SQLALCHEMY_DATABASE_URI, SQLALCHEMY_TRACK_MODIFICATIONS,
 )
 from services.sensor_ingest import append_soil_reading
+from services.model_comparison import predict_crop_all_models, get_crop_metrics
+from database import db, User, CropPrediction, SoilPrediction
+from auth import auth_bp
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = SECRET_KEY
+app.config['SQLALCHEMY_DATABASE_URI'] = SQLALCHEMY_DATABASE_URI
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = SQLALCHEMY_TRACK_MODIFICATIONS
+
+# Initialize database
+db.init_app(app)
+
+# Initialize Flask-Login
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'auth.login'
+login_manager.login_message = 'Please log in to access this page.'
+login_manager.login_message_category = 'info'
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
+# Register authentication blueprint
+app.register_blueprint(auth_bp)
+
+# Create database tables
+with app.app_context():
+    db.create_all()
 
 
 _models = {'crop': None, 'soil_clf': None, 'soil_reg': None}
@@ -56,6 +84,53 @@ def get_soil_scaler():
 @app.route('/')
 def home():
     return render_template('index.html')
+
+@app.route('/tools/crop')
+@login_required
+def crop_prediction_page():
+    """Crop prediction tool page"""
+    return render_template('crop_prediction.html')
+
+@app.route('/tools/soil')
+@login_required
+def soil_monitoring_page():
+    """Soil monitoring tool page"""
+    return render_template('soil_monitoring.html')
+
+@app.route('/history')
+@login_required
+def history():
+    """Display user's prediction history"""
+    import json
+    
+    # Get page number from query params (default to 1)
+    page = request.args.get('page', 1, type=int)
+    per_page = 10
+    
+    # Get crop predictions for current user
+    crop_predictions = CropPrediction.query.filter_by(user_id=current_user.id)\
+        .order_by(CropPrediction.created_at.desc())\
+        .paginate(page=page, per_page=per_page, error_out=False)
+    
+    # Get soil predictions for current user
+    soil_predictions = SoilPrediction.query.filter_by(user_id=current_user.id)\
+        .order_by(SoilPrediction.created_at.desc())\
+        .paginate(page=page, per_page=per_page, error_out=False)
+    
+    # Parse JSON for soil predictions
+    for pred in soil_predictions.items:
+        if pred.recommended_crops:
+            try:
+                pred.recommended_crops_list = json.loads(pred.recommended_crops)
+            except:
+                pred.recommended_crops_list = []
+        else:
+            pred.recommended_crops_list = []
+    
+    return render_template('history.html', 
+                         crop_predictions=crop_predictions,
+                         soil_predictions=soil_predictions)
+
 
 def calculate_input_similarity(N, P, K, temp, humidity, ph, rainfall):
     """
@@ -111,6 +186,7 @@ def calculate_input_similarity(N, P, K, temp, humidity, ph, rainfall):
         return 1.0
 
 @app.route('/predict/crop', methods=['POST'])
+@login_required
 def predict_crop():
     model = get_crop_model()
     scaler = get_crop_scaler()
@@ -129,36 +205,75 @@ def predict_crop():
     Xs = scaler.transform(X)
     probs = model.predict(Xs, verbose=0)[0]
     
-    # Get top 2 predictions
-    top_2_indices = np.argsort(probs)[-2:][::-1]  # Get indices of top 2, sorted descending
-    top_1_prob = float(probs[top_2_indices[0]])
-    top_2_prob = float(probs[top_2_indices[1]])
-    
+    # Load class map
     class_map = load(LABEL_MAPS_CLASSINDEX)
-    top_1_crop = class_map[int(top_2_indices[0])]
-    top_2_crop = class_map[int(top_2_indices[1])]
     
-    # If top 2 crops are within 1% confidence, show both
-    if top_1_prob - top_2_prob <= 0.01:
-        pred_label = f"{top_1_crop}/{top_2_crop}"
-        confidence = top_1_prob  # Use top prediction's confidence
+    # Create list of all crops with their confidence scores
+    all_crops = []
+    for idx, prob in enumerate(probs):
+        crop_name = class_map[int(idx)]
+        adjusted_confidence = float(prob) * similarity_score
+        all_crops.append({
+            'name': crop_name,
+            'confidence': adjusted_confidence,
+            'raw_confidence': float(prob)
+        })
+    
+    # Sort by confidence descending
+    all_crops.sort(key=lambda x: x['confidence'], reverse=True)
+    
+    # Get top prediction
+    top_1_crop = all_crops[0]['name']
+    confidence = all_crops[0]['confidence']
+    
+    # Check if top 2 are very close (within 1%)
+    if len(all_crops) > 1 and (all_crops[0]['raw_confidence'] - all_crops[1]['raw_confidence']) <= 0.01:
+        pred_label = f"{all_crops[0]['name']}/{all_crops[1]['name']}"
     else:
         pred_label = top_1_crop
-        confidence = top_1_prob
     
-    # Adjust confidence based on similarity to real dataset
-    # If inputs are far from any real crop data, reduce confidence
-    confidence = confidence * similarity_score
+    # Save prediction to database
+    try:
+        crop_prediction = CropPrediction(
+            user_id=current_user.id,
+            N=N,
+            P=P,
+            K=K,
+            temperature=temp,
+            humidity=humidity,
+            ph=ph,
+            rainfall=rainfall,
+            predicted_crop=pred_label,
+            confidence=confidence
+        )
+        db.session.add(crop_prediction)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error saving crop prediction: {e}")
+    
+    # Get predictions from all comparison models
+    model_predictions = {}
+    model_metrics = {}
+    try:
+        model_predictions = predict_crop_all_models(Xs, class_map)
+        model_metrics = get_crop_metrics()
+    except Exception as e:
+        print(f"Model comparison failed: {e}")
     
     result = {
         'predicted_crop': pred_label,
-        'confidence': confidence
+        'confidence': confidence,
+        'all_crops': all_crops,
+        'model_predictions': model_predictions,
+        'model_metrics': model_metrics
     }
     return render_template('results.html', result=result)
 
 
 
 @app.route('/predict/soil', methods=['POST'])
+@login_required
 def predict_soil():
     import pandas as pd
     from config import CROP_DATA
@@ -248,6 +363,28 @@ def predict_soil():
     except Exception as e:
         print(f"Crop recommendation failed: {e}")
         recommended_crops = []
+    
+    # Save prediction to database
+    import json
+    try:
+        soil_prediction = SoilPrediction(
+            user_id=current_user.id,
+            temperature=temp,
+            humidity=humidity,
+            ph=ph,
+            ec=ec,
+            N=N,
+            P=P,
+            K=K,
+            irrigation_needed=bool(irr_need),
+            predicted_moisture=moisture_pred,
+            recommended_crops=json.dumps(recommended_crops)
+        )
+        db.session.add(soil_prediction)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error saving soil prediction: {e}")
     
     result = {
         'irrigation_needed': irr_need,

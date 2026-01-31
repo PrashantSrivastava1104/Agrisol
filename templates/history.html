@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+
+{% block title %}Prediction History - AgriSol{% endblock %}
+
+{% block content %}
+<div class="history-container">
+    <h2 class="section-title">Your Prediction History</h2>
+
+    <!-- Tabs for switching between crop and soil predictions -->
+    <div class="tabs">
+        <button class="tab-button active" onclick="showTab('crop')">Crop Predictions</button>
+        <button class="tab-button" onclick="showTab('soil')">Soil Monitoring</button>
+    </div>
+
+    <!-- Crop Predictions Tab -->
+    <div id="crop-tab" class="tab-content active">
+        {% if crop_predictions.items %}
+        <div class="predictions-grid">
+            {% for pred in crop_predictions.items %}
+            <div class="prediction-card">
+                <div class="prediction-header">
+                    <h3>{{ pred.predicted_crop }}</h3>
+                    <span class="prediction-date">{{ pred.created_at.strftime('%b %d, %Y at %I:%M %p') }}</span>
+                </div>
+                <div class="prediction-body">
+                    <div class="prediction-result">
+                        <strong>Confidence:</strong> {{ (pred.confidence * 100)|round(1) }}%
+                    </div>
+                    <div class="prediction-inputs">
+                        <h4>Input Parameters:</h4>
+                        <div class="input-grid">
+                            <div><strong>N:</strong> {{ pred.N|round(1) }}</div>
+                            <div><strong>P:</strong> {{ pred.P|round(1) }}</div>
+                            <div><strong>K:</strong> {{ pred.K|round(1) }}</div>
+                            <div><strong>Temp:</strong> {{ pred.temperature|round(1) }}°C</div>
+                            <div><strong>Humidity:</strong> {{ pred.humidity|round(1) }}%</div>
+                            <div><strong>pH:</strong> {{ pred.ph|round(2) }}</div>
+                            <div><strong>Rainfall:</strong> {{ pred.rainfall|round(1) }}mm</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if crop_predictions.pages > 1 %}
+        <div class="pagination">
+            {% if crop_predictions.has_prev %}
+            <a href="{{ url_for('history', page=crop_predictions.prev_num) }}" class="btn-page">← Previous</a>
+            {% endif %}
+            <span class="page-info">Page {{ crop_predictions.page }} of {{ crop_predictions.pages }}</span>
+            {% if crop_predictions.has_next %}
+            <a href="{{ url_for('history', page=crop_predictions.next_num) }}" class="btn-page">Next →</a>
+            {% endif %}
+        </div>
+        {% endif %}
+        {% else %}
+        <div class="empty-state">
+            <p>📊 No crop predictions yet</p>
+            <p class="empty-subtitle">Make your first prediction to see it here!</p>
+            <a href="/" class="btn btn-primary">Make a Prediction</a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Soil Predictions Tab -->
+    <div id="soil-tab" class="tab-content">
+        {% if soil_predictions.items %}
+        <div class="predictions-grid">
+            {% for pred in soil_predictions.items %}
+            <div class="prediction-card">
+                <div class="prediction-header">
+                    <h3>Soil Analysis</h3>
+                    <span class="prediction-date">{{ pred.created_at.strftime('%b %d, %Y at %I:%M %p') }}</span>
+                </div>
+                <div class="prediction-body">
+                    <div class="prediction-result">
+                        <div class="result-item">
+                            <strong>Irrigation:</strong>
+                            <span
+                                class="badge {% if pred.irrigation_needed %}badge-warning{% else %}badge-success{% endif %}">
+                                {% if pred.irrigation_needed %}Required{% else %}Not Required{% endif %}
+                            </span>
+                        </div>
+                        <div class="result-item">
+                            <strong>Moisture:</strong> {{ pred.predicted_moisture|round(1) }}%
+                        </div>
+                    </div>
+
+                    {% if pred.recommended_crops_list %}
+                    <div class="recommended-crops">
+                        <h4>Recommended Crops:</h4>
+                        <div class="crops-list">
+                            {% for crop in pred.recommended_crops_list %}
+                            <span class="crop-badge">{{ crop.name }} ({{ crop.suitability }}%)</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="prediction-inputs">
+                        <h4>Input Parameters:</h4>
+                        <div class="input-grid">
+                            <div><strong>Temp:</strong> {{ pred.temperature|round(1) }}°C</div>
+                            <div><strong>Humidity:</strong> {{ pred.humidity|round(1) }}%</div>
+                            <div><strong>pH:</strong> {{ pred.ph|round(2) }}</div>
+                            <div><strong>EC:</strong> {{ pred.ec|round(1) }}</div>
+                            <div><strong>N:</strong> {{ pred.N|round(1) }}</div>
+                            <div><strong>P:</strong> {{ pred.P|round(1) }}</div>
+                            <div><strong>K:</strong> {{ pred.K|round(1) }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if soil_predictions.pages > 1 %}
+        <div class="pagination">
+            {% if soil_predictions.has_prev %}
+            <a href="{{ url_for('history', page=soil_predictions.prev_num) }}" class="btn-page">← Previous</a>
+            {% endif %}
+            <span class="page-info">Page {{ soil_predictions.page }} of {{ soil_predictions.pages }}</span>
+            {% if soil_predictions.has_next %}
+            <a href="{{ url_for('history', page=soil_predictions.next_num) }}" class="btn-page">Next →</a>
+            {% endif %}
+        </div>
+        {% endif %}
+        {% else %}
+        <div class="empty-state">
+            <p>🌱 No soil predictions yet</p>
+            <p class="empty-subtitle">Make your first soil analysis to see it here!</p>
+            <a href="/" class="btn btn-primary">Make a Prediction</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    function showTab(tabName) {
+        // Hide all tabs
+        document.querySelectorAll('.tab-content').forEach(tab => {
+            tab.classList.remove('active');
+        });
+
+        // Remove active class from all buttons
+        document.querySelectorAll('.tab-button').forEach(btn => {
+            btn.classList.remove('active');
+        });
+
+        // Show selected tab
+        document.getElementById(tabName + '-tab').classList.add('active');
+
+        // Add active class to clicked button
+        event.target.classList.add('active');
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block title %}Soil Monitoring - AgriSol{% endblock %}
+
+{% block content %}
+<div class="tool-page">
+    <div class="tool-header">
+        <h1>🌱 Soil Monitoring</h1>
+        <p>Analyze your soil conditions and get irrigation recommendations</p>
+    </div>
+
+    <div class="tool-instructions">
+        <h3>How it works:</h3>
+        <ol>
+            <li>Enter current environmental conditions (temperature, humidity)</li>
+            <li>Provide soil measurements (pH, EC)</li>
+            <li>Add nutrient levels (N, P, K)</li>
+            <li>Click "Analyze Soil" to get irrigation needs and crop recommendations</li>
+        </ol>
+    </div>
+
+    <div class="card">
+        <form method="post" action="/predict/soil">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="soil-temp">Temperature <span class="unit">°C</span></label>
+                    <input id="soil-temp" name="temperature" type="number" step="0.1" placeholder="e.g., 25.0" required>
+                </div>
+                <div class="form-group">
+                    <label for="soil-humidity">Humidity <span class="unit">%</span></label>
+                    <input id="soil-humidity" name="humidity" type="number" step="0.1" placeholder="e.g., 65.0"
+                        required>
+                </div>
+                <div class="form-group">
+                    <label for="soil-ph">pH Level</label>
+                    <input id="soil-ph" name="ph" type="number" step="0.1" placeholder="e.g., 6.8" required>
+                </div>
+                <div class="form-group">
+                    <label for="soil-ec">Electrical Conductivity (EC) <span class="unit">dS/m</span></label>
+                    <input id="soil-ec" name="ec" type="number" step="0.1" placeholder="e.g., 1.2" required>
+                </div>
+                <div class="form-group">
+                    <label for="soil-n">Nitrogen (N) <span class="unit">kg/ha</span></label>
+                    <input id="soil-n" name="N" type="number" step="1" placeholder="e.g., 80" required>
+                </div>
+                <div class="form-group">
+                    <label for="soil-p">Phosphorus (P) <span class="unit">kg/ha</span></label>
+                    <input id="soil-p" name="P" type="number" step="1" placeholder="e.g., 40" required>
+                </div>
+                <div class="form-group">
+                    <label for="soil-k">Potassium (K) <span class="unit">kg/ha</span></label>
+                    <input id="soil-k" name="K" type="number" step="1" placeholder="e.g., 45" required>
+                </div>
+            </div>
+            <button type="submit">📊 Analyze Soil</button>
+        </form>
+    </div>
+
+    <div class="tool-footer">
+        <a href="/" class="back-link">← Back to Home</a>
+    </div>
+</div>
+{% endblock %}

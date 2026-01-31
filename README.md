@@ -81,7 +81,18 @@ Get-Item .\\data\\kaggle\\AutoIrrigation.csv
 
 ### 6) Train ML models
 
-- Crop model:
+- **[New]** Crop Comparison Models (RF, XGB, SVM, LR):
+```powershell
+python .\\models\\train_comparison_crop_models.py
+```
+Artifacts produced:
+- `models\\crop_random_forest.pkl`
+- `models\\crop_xgboost.pkl`
+- `models\\crop_svm.pkl`
+- `models\\crop_logistic_regression.pkl`
+- `models\\crop_comparison_metrics.json`
+
+- Crop model (Primary Neural Network):
 ```powershell
 python .\\models\\train_crop_model.py
 ```
@@ -99,6 +110,26 @@ Artifacts produced:
 - `models\\soil_clf_model.keras`
 - `models\\soil_reg_model.keras`
 - `models\\soil_scaler.pkl`
+
+## Key Features
+
+### 1. Crop Prediction & Comparison
+- **Primary Recommendation**: Uses a deep learning Neural Network for high accuracy.
+- **Crop Comparison**: Dropdown to compare the recommended crop with other potential crops for the same soil conditions.
+- **Collapsible Rankings**: Complete list of all 22 crops ranked by suitability confidence.
+
+### 2. Model Comparison (Research Analysis)
+- Compares predictions from 5 different ML algorithms:
+  - Neural Network (Primary)
+  - Random Forest
+  - XGBoost
+  - Support Vector Machine (SVM)
+  - Logistic Regression
+- **Visual Charts**: Interactive Bar and Radar charts showing confidence scores and performance metrics (Accuracy, Precision, Recall, F1).
+
+### 3. Soil Monitoring
+- Predicts if irrigation is needed based on soil sensors.
+- Estimates current soil moisture levels.
 
 ### 7) Run Flask app
 
